@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Ankilot風オンライン単語帳</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #fafafa;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { text-align: center; }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    .card {
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 22px;
+      margin-top: 20px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Ankilot風 単語帳</h1>
+
+  <!-- 単語追加フォーム -->
+  <input type="text" id="front" placeholder="単語・問題（例: apple）">
+  <input type="text" id="back" placeholder="意味・答え（例: りんご）">
+  <button onclick="addCard()">カードを追加</button>
+
+  <!-- カード表示 -->
+  <div id="cardArea"></div>
+</div>
+
+<script>
+  let cards = [];
+  let current = 0;
+  let showFront = true;
+
+  function addCard() {
+    let f = document.getElementById("front").value.trim();
+    let b = document.getElementById("back").value.trim();
+    if (!f || !b) return alert("両方入力してください！");
+    cards.push({front: f, back: b});
+    document.getElementById("front").value = "";
+    document.getElementById("back").value = "";
+    renderCards();
+  }
+
+  function renderCards() {
+    let area = document.getElementById("cardArea");
+    area.innerHTML = "";
+    cards.forEach((c, i) => {
+      let div = document.createElement("div");
+      div.className = "card";
+      div.textContent = c.front;
+      div.onclick = () => flipCard(i, div);
+      area.appendChild(div);
+    });
+  }
+
+  function flipCard(index, div) {
+    showFront = !showFront;
+    div.textContent = showFront ? cards[index].front : cards[index].back;
+  }
+</script>
+
+</body>
+</html>
