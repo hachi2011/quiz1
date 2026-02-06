@@ -3,261 +3,214 @@
 <head>
 <meta charset="UTF-8">
 <title>Ankilot風 単語帳</title>
+
 <style>
-  body {
-    font-family: sans-serif;
-    background: #eef2ff;
-    display: flex;
-    justify-content: center;
-    padding: 40px;
-  }
+* { box-sizing: border-box; }
 
-  .app {
-    width: 420px;
-    background: white;
-    padding: 20px;
-    border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  }
+body {
+  font-family: sans-serif;
+  background: #eef2ff;
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
 
-  h2 { margin-top: 0; text-align: center; }
+.app {
+  width: 420px;
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
 
-  select, input, button, textarea {
-    width: 100%;
-    margin: 6px 0;
-    padding: 8px;
-    font-size: 15px;
-  }
+h2 { text-align: center; margin-top: 0; }
 
-  button {
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #4f46e5;
-    color: white;
-  }
+input, select, button {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0;
+  font-size: 15px;
+}
 
-  .secondary {
-    background: #6b7280;
-  }
+button {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #4f46e5;
+  color: white;
+}
 
-  .danger {
-    background: #dc2626;
-  }
+.secondary { background: #6b7280; }
+.hidden { display: none; }
 
-  .card {
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-    margin: 16px 0;
-  }
+.card {
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  margin: 16px 0;
+}
 
-  .result {
-    text-align: center;
-    font-weight: bold;
-    margin-top: 10px;
-  }
-
-  .correct { color: #16a34a; }
-  .wrong { color: #dc2626; }
-
-  .hidden { display: none; }
-
-  ul {
-    padding-left: 20px;
-  }
-
-  li {
-    margin-bottom: 4px;
-  }
+.result { text-align: center; font-weight: bold; }
+.correct { color: #16a34a; }
+.wrong { color: #dc2626; }
 </style>
 </head>
-<body>
 
+<body>
 <div class="app">
 
-  <!-- 単語帳選択 -->
-  <div id="menu">
-    <h2>単語帳を選択</h2>
-    <select id="deckSelect"></select>
-    <button onclick="startTest()">暗記を始める</button>
-    <button class="secondary" onclick="showEditor()">単語帳を編集</button>
-  </div>
+<!-- メニュー -->
+<div id="menu">
+  <h2>公開単語帳</h2>
+  <select id="deckSelect"></select>
+  <button onclick="startTest()">暗記を始める</button>
+  <button class="secondary" onclick="showCreate()">単語帳を作成</button>
+</div>
 
-  <!-- 暗記画面 -->
-  <div id="test" class="hidden">
-    <h2 id="deckTitle"></h2>
-    <div class="card" id="question"></div>
-    <input id="answer" placeholder="答えを入力" autofocus>
-    <button id="checkBtn">答え合わせ（Enter）</button>
-    <button id="nextBtn" class="secondary hidden">次の問題（Enter）</button>
-    <div id="result" class="result"></div>
-    <button class="secondary" onclick="backToMenu()">戻る</button>
-  </div>
+<!-- テスト -->
+<div id="test" class="hidden">
+  <h2 id="deckTitle"></h2>
+  <div class="card" id="question"></div>
+  <input id="answer" placeholder="答えを入力">
+  <button id="checkBtn">答え合わせ（Enter）</button>
+  <button id="nextBtn" class="secondary hidden">次の問題（Enter）</button>
+  <div id="result" class="result"></div>
+  <button class="secondary" onclick="back()">戻る</button>
+</div>
 
-  <!-- 編集画面 -->
-  <div id="editor" class="hidden">
-    <h2>単語帳編集</h2>
-    <input id="newDeckName" placeholder="新しい単語帳名">
-    <button onclick="createDeck()">単語帳を作成</button>
-
-    <select id="editDeckSelect"></select>
-
-    <input id="front" placeholder="問題">
-    <input id="back" placeholder="答え">
-    <button onclick="addWord()">単語を追加</button>
-
-    <ul id="wordList"></ul>
-
-    <button class="secondary" onclick="backToMenu()">戻る</button>
-  </div>
+<!-- 作成 -->
+<div id="create" class="hidden">
+  <h2>単語帳作成</h2>
+  <input id="newName" placeholder="単語帳名">
+  <input id="newPass" placeholder="パスワード">
+  <button onclick="createDeck()">公開する</button>
+  <button class="secondary" onclick="back()">戻る</button>
+</div>
 
 </div>
 
 <script>
-  let decks = JSON.parse(localStorage.getItem("decks")) || {
-    英単語: [
-      { q: "apple", a: "りんご" },
-      { q: "dog", a: "犬" }
-    ],
-    IT用語: [
-      { q: "HTML", a: "Webページの構造" },
-      { q: "CSS", a: "デザイン指定" }
-    ]
-  };
+/* ===== 設定 ===== */
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwju3IZmXQsZ9YlEqMCsoevpBpQoLM7z-B3QlNwAtifBLEb9KCO5SoCyQYvnDEY2qfv/exec";
 
-  let currentDeck = [];
-  let deckName = "";
-  let index = 0;
-  let phase = "question";
+/* ===== 状態 ===== */
+let publicDecks = [];
+let currentDeck = [];
+let index = 0;
+let phase = "question";
 
-  const menu = document.getElementById("menu");
-  const test = document.getElementById("test");
-  const editor = document.getElementById("editor");
+/* ===== DOM ===== */
+const menu = document.getElementById("menu");
+const test = document.getElementById("test");
+const create = document.getElementById("create");
 
-  function save() {
-    localStorage.setItem("decks", JSON.stringify(decks));
+/* ===== 共通 ===== */
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+function show(el) {
+  [menu, test, create].forEach(d => d.classList.add("hidden"));
+  el.classList.remove("hidden");
+}
+
+/* ===== 公開単語帳を取得 ===== */
+async function loadDecks() {
+  const res = await fetch(GAS_URL);
+  publicDecks = await res.json();
+
+  deckSelect.innerHTML = "";
+  publicDecks.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = d.deckId;
+    opt.textContent = d.name;
+    deckSelect.appendChild(opt);
+  });
+}
+
+/* ===== テスト開始 ===== */
+function startTest() {
+  const id = deckSelect.value;
+  const deck = publicDecks.find(d => d.deckId === id);
+
+  currentDeck = shuffle(deck.data);
+  index = 0;
+  deckTitle.textContent = deck.name;
+  showQuestion();
+  show(test);
+}
+
+function showQuestion() {
+  question.textContent = currentDeck[index].q;
+  answer.value = "";
+  result.textContent = "";
+  checkBtn.classList.remove("hidden");
+  nextBtn.classList.add("hidden");
+  phase = "question";
+  answer.focus();
+}
+
+function checkAnswer() {
+  if (!answer.value) return;
+  const correct = currentDeck[index].a;
+
+  if (answer.value.trim() === correct) {
+    result.textContent = "正解！🎉";
+    result.className = "result correct";
+  } else {
+    result.textContent = `不正解… 正解：${correct}`;
+    result.className = "result wrong";
   }
 
-  function shuffle(arr) {
-    return arr.sort(() => Math.random() - 0.5);
-  }
+  checkBtn.classList.add("hidden");
+  nextBtn.classList.remove("hidden");
+  phase = "result";
+}
 
-  function renderDeckSelects() {
-    const selects = [deckSelect, editDeckSelect];
-    selects.forEach(sel => {
-      sel.innerHTML = "";
-      Object.keys(decks).forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        sel.appendChild(opt);
-      });
-    });
-  }
+function nextQuestion() {
+  index = (index + 1) % currentDeck.length;
+  showQuestion();
+}
 
-  function startTest() {
-    deckName = deckSelect.value;
-    currentDeck = shuffle([...decks[deckName]]);
-    index = 0;
-    showQuestion();
-    deckTitle.textContent = deckName;
-    menu.classList.add("hidden");
-    test.classList.remove("hidden");
-  }
+/* ===== 作成 ===== */
+function showCreate() {
+  show(create);
+}
 
-  function showQuestion() {
-    question.textContent = currentDeck[index].q;
-    answer.value = "";
-    result.textContent = "";
-    result.className = "result";
-    checkBtn.classList.remove("hidden");
-    nextBtn.classList.add("hidden");
-    phase = "question";
-    answer.focus();
-  }
+async function createDeck() {
+  if (!newName.value || !newPass.value) return;
 
-  function checkAnswer() {
-    const user = answer.value.trim();
-    if (!user) return;
-    const correct = currentDeck[index].a;
-    if (user === correct) {
-      result.textContent = "正解！🎉";
-      result.classList.add("correct");
-    } else {
-      result.textContent = `不正解… 正解：${correct}`;
-      result.classList.add("wrong");
-    }
-    checkBtn.classList.add("hidden");
-    nextBtn.classList.remove("hidden");
-    phase = "result";
-  }
-
-  function nextQuestion() {
-    index = (index + 1) % currentDeck.length;
-    showQuestion();
-  }
-
-  function backToMenu() {
-    menu.classList.remove("hidden");
-    test.classList.add("hidden");
-    editor.classList.add("hidden");
-    renderDeckSelects();
-  }
-
-  function showEditor() {
-    menu.classList.add("hidden");
-    editor.classList.remove("hidden");
-    renderDeckSelects();
-    renderWordList();
-  }
-
-  function createDeck() {
-    const name = newDeckName.value.trim();
-    if (!name || decks[name]) return;
-    decks[name] = [];
-    newDeckName.value = "";
-    save();
-    renderDeckSelects();
-  }
-
-  function addWord() {
-    const d = editDeckSelect.value;
-    if (!front.value || !back.value) return;
-    decks[d].push({ q: front.value, a: back.value });
-    front.value = back.value = "";
-    save();
-    renderWordList();
-  }
-
-  function renderWordList() {
-    const d = editDeckSelect.value;
-    wordList.innerHTML = "";
-    decks[d].forEach((w, i) => {
-      const li = document.createElement("li");
-      li.textContent = `${w.q} → ${w.a}`;
-      const del = document.createElement("button");
-      del.textContent = "削除";
-      del.className = "danger";
-      del.onclick = () => {
-        decks[d].splice(i, 1);
-        save();
-        renderWordList();
-      };
-      li.appendChild(del);
-      wordList.appendChild(li);
-    });
-  }
-
-  document.addEventListener("keydown", e => {
-    if (test.classList.contains("hidden")) return;
-    if (e.key === "Enter") {
-      phase === "question" ? checkAnswer() : nextQuestion();
-    }
+  await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "create",
+      name: newName.value,
+      password: newPass.value,
+      words: []
+    })
   });
 
-  renderDeckSelects();
-</script>
+  alert("単語帳を公開しました");
+  newName.value = newPass.value = "";
+  await loadDecks();
+  show(menu);
+}
 
+/* ===== 戻る ===== */
+function back() {
+  show(menu);
+}
+
+/* ===== Enter操作 ===== */
+document.addEventListener("keydown", e => {
+  if (!test.classList.contains("hidden") && e.key === "Enter") {
+    phase === "question" ? checkAnswer() : nextQuestion();
+  }
+});
+
+/* 初期化 */
+loadDecks();
+</script>
 </body>
 </html>
