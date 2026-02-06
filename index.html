@@ -2,84 +2,139 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Ankilot風オンライン単語帳</title>
+  <title>Ankilot風 暗記テスト</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #fafafa;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 { text-align: center; }
-
-    .container {
-      max-width: 500px;
-      margin: auto;
+      font-family: "Helvetica Neue", sans-serif;
+      background: linear-gradient(135deg, #eef2ff, #fdfdfd);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    input, button {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-      font-size: 16px;
-    }
-    .card {
-      padding: 20px;
+    .app {
       background: white;
-      border-radius: 8px;
+      width: 360px;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    h1 {
       text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .question {
       font-size: 22px;
-      margin-top: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #4f46e5;
+      color: white;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .result {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .correct {
+      color: #16a34a;
+    }
+
+    .wrong {
+      color: #dc2626;
+    }
+
+    .next {
+      margin-top: 10px;
+      background: #6b7280;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>Ankilot風 単語帳</h1>
+<div class="app">
+  <h1>Ankilot風</h1>
 
-  <!-- 単語追加フォーム -->
-  <input type="text" id="front" placeholder="単語・問題（例: apple）">
-  <input type="text" id="back" placeholder="意味・答え（例: りんご）">
-  <button onclick="addCard()">カードを追加</button>
+  <div class="question" id="question"></div>
 
-  <!-- カード表示 -->
-  <div id="cardArea"></div>
+  <input type="text" id="answer" placeholder="答えを入力">
+
+  <button onclick="checkAnswer()">答え合わせ</button>
+
+  <div class="result" id="result"></div>
+
+  <button class="next" onclick="nextQuestion()">次の問題</button>
 </div>
 
 <script>
-  let cards = [];
-  let current = 0;
-  let showFront = true;
+  const questions = [
+    { q: "apple", a: "りんご" },
+    { q: "dog", a: "犬" },
+    { q: "water", a: "水" }
+  ];
 
-  function addCard() {
-    let f = document.getElementById("front").value.trim();
-    let b = document.getElementById("back").value.trim();
-    if (!f || !b) return alert("両方入力してください！");
-    cards.push({front: f, back: b});
-    document.getElementById("front").value = "";
-    document.getElementById("back").value = "";
-    renderCards();
+  let index = 0;
+
+  const questionEl = document.getElementById("question");
+  const answerEl = document.getElementById("answer");
+  const resultEl = document.getElementById("result");
+
+  function showQuestion() {
+    questionEl.textContent = questions[index].q;
+    answerEl.value = "";
+    resultEl.textContent = "";
+    resultEl.className = "result";
   }
 
-  function renderCards() {
-    let area = document.getElementById("cardArea");
-    area.innerHTML = "";
-    cards.forEach((c, i) => {
-      let div = document.createElement("div");
-      div.className = "card";
-      div.textContent = c.front;
-      div.onclick = () => flipCard(i, div);
-      area.appendChild(div);
-    });
+  function checkAnswer() {
+    const userAnswer = answerEl.value.trim();
+    const correct = questions[index].a;
+
+    if (!userAnswer) return;
+
+    if (userAnswer === correct) {
+      resultEl.textContent = "正解！🎉";
+      resultEl.classList.add("correct");
+    } else {
+      resultEl.textContent = `不正解… 正解：${correct}`;
+      resultEl.classList.add("wrong");
+    }
   }
 
-  function flipCard(index, div) {
-    showFront = !showFront;
-    div.textContent = showFront ? cards[index].front : cards[index].back;
+  function nextQuestion() {
+    index = (index + 1) % questions.length;
+    showQuestion();
   }
+
+  showQuestion();
 </script>
 
 </body>
